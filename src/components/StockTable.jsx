@@ -6,16 +6,33 @@ const symbols = ['AAPL', 'GOOGL', 'MSFT', 'AMZN'];
 export default function StockTable() {
     const [stocks, setStocks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        Promise.all(symbols.map(symbol => fetchStock(symbol)))
-            .then(results => {
+        const fetchStockData = async () => {
+            try {
+                const results = await Promise.all(
+                    symbols.map(async (symbol) => {
+                        const data = await fetchStock(symbol);
+
+                        if(!data || !data['Global Quote']) {
+                            throw new Error(`Failed to fetch data for ${symbol}`);
+                        }
+                        return data(['Global Quote']);
+                    })
+                );
                 setStocks(results);
                 setLoading(false);
-            });
+            } catch (err) {
+                setError(err.message);
+                setLoading(false);
+            }
+        };
+        fetchStockData();
     }, []);
 
     if (loading) return <p className="text-white animate-pulse">Loading stock data...</p>;
+    if (error) return <p className="text-red-500">Error: {error}</p>;
 
     return (
         <div className="overflow-x-auto">
@@ -30,10 +47,17 @@ export default function StockTable() {
                 <tbody>
                     {stocks.map((stock, i) => (
                         <tr key={i} className="border-t border-gray-700">
-                            <td className="p-3">{stock["01. symbol"]}</td>
-                            <td className="p-3">${Number(stock["05. price"]).toFixed(2)}</td>
-                            <td className={`p-3 ${stock["10. change percent"].startsWith('-') ? 'text-red-500' : 'text-green-500'}`}>
-                                {stock["10. change percent"]}
+                            <td className="p-3">{stock["01. symbol"] || "N/A"}</td>
+                            <td className="p-3">
+                                ${Number(stock["05. price"] || 0).toFixed(2)}
+                            </td>
+                            <td className={`p-3 ${
+                                (stock["10. change percent"] || "").startsWith('-'
+                                    ? 'text-red-500' 
+                                    : 'text-green-500'
+                                ) 
+                            }`}>
+                                {stock["10. change percent"] || "N/A"}
                             </td>
                         </tr>
                     ))}
