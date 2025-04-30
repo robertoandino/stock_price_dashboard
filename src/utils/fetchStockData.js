@@ -17,6 +17,12 @@ export async function fetchStock(symbol = 'AAPL') {
         const data = await res.json();
         console.log('Response:', data);
 
+        //API calls daily limit message
+        if(data.Information && data.Information.includes('API rate limit')) {
+            throw new Error('Daily API limit reached. Please try again tomorrow or upgrade to premium.');
+        }
+
+        //API calls per-minute rate limit
         if(data.Note && data.Note.includes('API call frequency')) {
             console.warn('Rate limit reached, waiting before retry...');
             await delay(60000);
