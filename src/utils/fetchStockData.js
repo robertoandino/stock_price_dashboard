@@ -19,7 +19,9 @@ export async function fetchStock(symbol = 'AAPL') {
 
         //API calls daily limit message
         if(data.Information && data.Information.includes('API rate limit')) {
-            throw new Error('Daily API limit reached. Please try again tomorrow or upgrade to premium.');
+            const limitMessage = 'Daily API limit reached. The free tier allows 25 requests per day. Please try again tomorrow or upgrade to premium at https://www.alphavantage.co/premium/';
+            console.warn(limitMessage);
+            throw new Error(limitMessage);
         }
 
         //API calls per-minute rate limit
