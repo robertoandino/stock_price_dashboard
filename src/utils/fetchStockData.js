@@ -1,3 +1,5 @@
+import { mockStockData } from './mockStockData';
+
 const API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY;
 
 //Delay between API calls
@@ -17,11 +19,14 @@ export async function fetchStock(symbol = 'AAPL') {
         const data = await res.json();
         console.log('Response:', data);
 
-        //API calls daily limit message
+        //If API limit reached, use mock data
         if(data.Information && data.Information.includes('API rate limit')) {
-            const limitMessage = 'Daily API limit reached. The free tier allows 25 requests per day. Please try again tomorrow or upgrade to premium at https://www.alphavantage.co/premium/';
-            console.warn(limitMessage);
-            throw new Error(limitMessage);
+            console.warn('API limit reached, using mock data');
+            return mockStockData[symbol] || {
+                "01. symbol": symbol,
+                "05. price": "N/A",
+                "10. change percent": "N/A"
+            };
         }
 
         //API calls per-minute rate limit
@@ -32,12 +37,22 @@ export async function fetchStock(symbol = 'AAPL') {
         }
 
         if(!data || !data['Global Quote']) {
-            throw new Error('Invalid API response format');
+            console.warn('No API data available, using mock data');
+            return mockStockData[symbol] || {
+                "01. symbol": symbol,
+                "05. price": "N/A",
+                "10. change percent": "N/A"
+            };
         }
 
         return data['Global Quote'];
     } catch (error) {
         console.error(`Error fetching ${symbol}:`, error.message);
-        throw error;
+        console.warn('Error occurred, falling back to mock data');
+        return mockStockData[symbol] || {
+            "01. symbol": symbol,
+            "05. price": "N/A",
+            "10. change percent": "N/A"
+        };
     }
 }
