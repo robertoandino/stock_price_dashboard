@@ -15,10 +15,10 @@ export default function StockTable() {
                     symbols.map(async (symbol) => {
                         const data = await fetchStock(symbol);
 
-                        if(!data || !data['Global Quote']) {
+                        if(!data) {
                             throw new Error(`Failed to fetch data for ${symbol}`);
                         }
-                        return data(['Global Quote']);
+                        return data;
                     })
                 );
                 setStocks(results);
