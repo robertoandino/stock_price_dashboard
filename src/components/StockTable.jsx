@@ -13,14 +13,23 @@ export default function StockTable() {
             try {
                 const results = await Promise.all(
                     symbols.map(async (symbol) => {
-                        const data = await fetchStock(symbol);
-
-                        if(!data) {
-                            throw new Error(`Failed to fetch data for ${symbol}`);
+                        try {
+                            const data = await fetchStock(symbol);
+                            return data;
+                        } catch (error) {
+                            return {
+                                "01. symbol": symbol,
+                                "05. price": "N/A",
+                                "10. change percent": "N/A",
+                            }
                         }
-                        return data;
                     })
                 );
+
+                if(results.every(result => result["05. price"] === "N/A")) {
+                    throw new Error("Failed to fetch any stock data.");
+                }
+
                 setStocks(results);
                 setLoading(false);
             } catch (err) {
